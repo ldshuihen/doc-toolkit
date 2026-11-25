@@ -1,5 +1,10 @@
 # 文档工具箱（doc-toolkit）
 
+[![CI](https://github.com/ldshuihen/doc-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/ldshuihen/doc-toolkit/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Java 17](https://img.shields.io/badge/Java-17-orange.svg)
+![Vue 3](https://img.shields.io/badge/Vue-3-42b883.svg)
+
 一套运行在本地的文档、PDF 与图片批量处理 Web 工具箱，基于 **Java 17 + Spring Boot 3** 与 **Vue 3 + Element Plus** 构建。所有文件均由本机后端直接处理，无需上传至第三方在线服务，兼顾隐私安全与批量处理效率。
 
 ---
@@ -52,38 +57,54 @@
 
 ### 环境要求
 - JDK 17+
-- Maven 3.8+
-- Node.js 18+（含 npm）
+- Maven 3.8+、Node.js 18+（开发或重新打包时需要；直接运行已打包好的单 JAR 仅需 JDK 17+）
 - *可选*：如需使用 **Word 转 PDF**，需在 Windows 环境下安装 Microsoft Word
 
-### 1. 启动后端（默认端口 `8080`）
+### 方式一：单 JAR 一键启动（推荐日常使用）
+
+Windows 下直接双击根目录脚本即可完成打包或启动：
+
+```bat
+:: 1. 打包前端并生成内嵌前端静态资源的单 JAR（backend\target\tool-kit-1.0.0.jar）
+build.bat
+
+:: 2. 一键启动服务并在就绪后自动打开 http://localhost:8080（若未打包会自动先执行 build.bat）
+start.bat
+```
+
+也可以在任意已安装 Java 17 的机器上直接运行打包好的单个 JAR，无需 Node.js：
+
+```bash
+java -jar backend/target/tool-kit-1.0.0.jar
+# 浏览器打开 http://localhost:8080
+```
+
+### 方式二：前后端分离开发模式
+
+**启动后端（默认端口 `8080`）：**
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-或打包为可执行 JAR 后启动：
-
-```bash
-cd backend
-mvn -DskipTests package
-java -jar target/tool-kit-1.0.0.jar
-```
-
-### 2. 启动前端（默认端口 `5173`）
+**启动前端（默认端口 `5173`，已配置 `/api` 代理转发至 `8080`）：**
 
 ```bash
 cd frontend
 npm install
 npm run dev
+# 浏览器打开 http://localhost:5173
 ```
 
-Vite 开发服务器已配置 `/api` 代理转发至 `http://localhost:8080`。启动后在浏览器访问：
+### 运行单元测试
 
+```bash
+cd backend
+mvn test
 ```
-http://localhost:5173
-```
+
+项目已配置 GitHub Actions（`.github/workflows/ci.yml`），每次推送至 `main` 或发起 PR 时自动校验前端构建、后端单测以及单 JAR 静态资源打包完整性。
 
 ---
 
@@ -91,10 +112,14 @@ http://localhost:5173
 
 ```text
 doc-toolkit/
+├── .github/workflows/ci.yml              # GitHub Actions 自动构建与测试
+├── build.bat                             # Windows 一键打包单 JAR（前端 + 后端）
+├── start.bat                             # Windows 一键启动并自动打开浏览器
+├── LICENSE                               # MIT 开源协议
 ├── backend/
-│   ├── pom.xml
-│   └── src/main/
-│       ├── java/com/toolkit/
+│   ├── pom.xml                           # 打包时自动将 frontend/dist 嵌入 static/
+│   └── src/
+│       ├── main/java/com/toolkit/
 │       │   ├── ToolKitApplication.java   # Spring Boot 启动类
 │       │   ├── ToolController.java       # REST 接口与异步任务提交/查询/下载
 │       │   ├── ApiExceptionHandler.java  # 上传超限等统一异常处理
@@ -106,8 +131,9 @@ doc-toolkit/
 │       │   ├── ImageService.java         # 图片格式转换与缩放
 │       │   ├── WordToPdfService.java     # 调用本机 Word COM 批量转 PDF
 │       │   └── RenameService.java        # 批量重命名
-│       └── resources/
-│           └── application.properties    # 端口与上传大小配置
+│       ├── main/resources/
+│       │   └── application.properties    # 端口与上传大小配置
+│       └── test/java/com/toolkit/        # JUnit 5 单元测试
 └── frontend/
     ├── index.html
     ├── package.json
@@ -147,3 +173,9 @@ doc-toolkit/
 - **Word 转 PDF**：依赖 Windows 下的 PowerShell 与本机 Microsoft Word COM 组件，非 Windows 环境或未安装 Word 时不可用。
 - **PDF 中文字体水印**：默认从 `C:\Windows\Fonts\` 加载系统黑体/楷体/仿宋 TTF 字体并按需嵌入子集；Linux/macOS 部署时若需中文水印，需将字体路径调整为对应系统字体。
 - **PDF 压缩效果**：仅针对内嵌图片重编码与降采样，扫描件及多图 PDF 效果显著；纯文字或矢量为主的 PDF 本身体积较小，压缩幅度有限。
+
+---
+
+## 开源协议
+
+本项目基于 [MIT License](LICENSE) 开源。
