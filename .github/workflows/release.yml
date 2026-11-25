@@ -71,4 +71,20 @@ jobs:
         with:
           files: release/DocToolkit-win-x64.zip
           generate_release_notes: true
+          body: |
+            ## 文档工具箱（Windows 免安装绿色版）
+
+            本地运行的 PDF、图片、Word 与文件批量处理工具箱，所有文件均在本机处理，不上传第三方服务器。
+
+            ### 下载与使用
+            1. 在下方 **Assets** 中下载 `DocToolkit-win-x64.zip` 并解压；
+            2. 双击目录内的 `DocToolkit.exe` 即可使用（**无需安装 JDK / Java / Node.js**，已内置精简运行时）；
+            3. 启动后自动在浏览器打开页面，并在 Windows 右下角常驻系统托盘图标，右键托盘可随时打开界面或退出程序。
+
+            ### 注意事项
+            - 除 **Word 转 PDF** 需要本机安装 Microsoft Word 外，其余 9 项工具开箱即用。
+            - 首次运行若弹出 Windows SmartScreen 提示，点击“更多信息 → 仍要运行”即可。
+            - 默认监听 `8080` 端口，若被占用会自动顺延切换为空闲端口。
+
+            ---
 

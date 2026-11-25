@@ -1,5 +1,6 @@
 # 文档工具箱（doc-toolkit）
 
+[![Release](https://img.shields.io/github/v/release/ldshuihen/doc-toolkit)](https://github.com/ldshuihen/doc-toolkit/releases/latest)
 [![CI](https://github.com/ldshuihen/doc-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/ldshuihen/doc-toolkit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Java 17](https://img.shields.io/badge/Java-17-orange.svg)
@@ -55,12 +56,24 @@
 
 ## 快速开始
 
-### 环境要求
+### 直接下载 Windows 绿色版（开箱即用，无需任何环境）
+
+1. 前往 [**Releases 页面**](https://github.com/ldshuihen/doc-toolkit/releases/latest) 下载最新的 `DocToolkit-win-x64.zip` 并解压；
+2. 双击目录中的 `DocToolkit.exe` 启动（**无需安装 JDK / Java / Maven / Node.js**，已内置精简 JRE 与前端资源）；
+3. 启动后会自动在默认浏览器打开应用页面，并在任务栏右下角常驻托盘图标（双击打开页面，右键可退出程序）。
+
+> 注：除 **Word 转 PDF** 需要本机安装 Microsoft Word 外，其余 9 项工具在纯净 Windows 10/11（64 位）上均可直接运行。首次启动若弹出 Windows SmartScreen 提示，点击“更多信息 → 仍要运行”即可。
+
+---
+
+### 从源码自行构建 / 开发
+
+#### 环境要求（仅开发或重新打包时需要）
 - JDK 17+
-- Maven 3.8+、Node.js 18+（开发或重新打包时需要；直接运行已打包好的单 JAR 仅需 JDK 17+）
+- Maven 3.8+、Node.js 18+
 - *可选*：如需使用 **Word 转 PDF**，需在 Windows 环境下安装 Microsoft Word
 
-### 方式一：打包为 Windows 绿色版 EXE（推荐分发给他人）
+#### 方式一：本地打包 Windows 绿色版 EXE
 
 借助 JDK 17 自带的 `jpackage`，可将前端、后端与精简 JRE 打包为免安装绿色版 `DocToolkit.exe`（目标电脑**无需安装 Java 或 Node.js**，无黑色命令行窗口，常驻系统托盘，自动检测空闲端口并打开浏览器）：
 
@@ -79,7 +92,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-### 方式二：单 JAR 一键启动（本机日常使用）
+#### 方式二：单 JAR 一键启动（本机日常使用）
 
 Windows 下直接双击根目录脚本即可完成打包或启动：
 
@@ -98,7 +111,7 @@ java -jar backend/target/tool-kit-1.0.0.jar
 # 浏览器打开 http://localhost:8080
 ```
 
-### 方式三：前后端分离开发模式
+#### 方式三：前后端分离开发模式
 
 **启动后端（默认端口 `8080`）：**
 
@@ -116,7 +129,7 @@ npm run dev
 # 浏览器打开 http://localhost:5173
 ```
 
-### 运行单元测试
+#### 运行单元测试
 
 ```bash
 cd backend
