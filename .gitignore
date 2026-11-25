@@ -2,8 +2,10 @@
 node_modules/
 target/
 dist/
+release/
 *.jar
 *.war
+*.exe
 
 # IDE & Editors
 .idea/

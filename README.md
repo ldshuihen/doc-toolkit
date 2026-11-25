@@ -60,7 +60,26 @@
 - Maven 3.8+、Node.js 18+（开发或重新打包时需要；直接运行已打包好的单 JAR 仅需 JDK 17+）
 - *可选*：如需使用 **Word 转 PDF**，需在 Windows 环境下安装 Microsoft Word
 
-### 方式一：单 JAR 一键启动（推荐日常使用）
+### 方式一：打包为 Windows 绿色版 EXE（推荐分发给他人）
+
+借助 JDK 17 自带的 `jpackage`，可将前端、后端与精简 JRE 打包为免安装绿色版 `DocToolkit.exe`（目标电脑**无需安装 Java 或 Node.js**，无黑色命令行窗口，常驻系统托盘，自动检测空闲端口并打开浏览器）：
+
+```bat
+package-exe.bat
+```
+
+打包完成后产出：
+- `release\DocToolkit\DocToolkit.exe`（免安装目录，双击直接运行）
+- `release\DocToolkit-win-x64.zip`（便携分发压缩包；`release/` 已加入 `.gitignore`，不会提交到 Git 源码分支）
+
+如需在 GitHub 上发布供他人直接下载的绿色版，可推送版本标签触发 `.github/workflows/release.yml` 自动打包并发布到 **GitHub Releases**：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### 方式二：单 JAR 一键启动（本机日常使用）
 
 Windows 下直接双击根目录脚本即可完成打包或启动：
 
@@ -79,7 +98,7 @@ java -jar backend/target/tool-kit-1.0.0.jar
 # 浏览器打开 http://localhost:8080
 ```
 
-### 方式二：前后端分离开发模式
+### 方式三：前后端分离开发模式
 
 **启动后端（默认端口 `8080`）：**
 
@@ -112,15 +131,20 @@ mvn test
 
 ```text
 doc-toolkit/
-├── .github/workflows/ci.yml              # GitHub Actions 自动构建与测试
+├── .github/workflows/
+│   ├── ci.yml                            # GitHub Actions 自动构建与单测
+│   └── release.yml                       # 打 v* 标签自动打包 Windows EXE 并发布 Release
+├── assets/app.ico                        # Windows EXE 应用图标
 ├── build.bat                             # Windows 一键打包单 JAR（前端 + 后端）
 ├── start.bat                             # Windows 一键启动并自动打开浏览器
+├── package-exe.bat                       # 使用 jpackage 一键生成免安装 Windows EXE
 ├── LICENSE                               # MIT 开源协议
 ├── backend/
 │   ├── pom.xml                           # 打包时自动将 frontend/dist 嵌入 static/
 │   └── src/
 │       ├── main/java/com/toolkit/
-│       │   ├── ToolKitApplication.java   # Spring Boot 启动类
+│       │   ├── ToolKitApplication.java   # Spring Boot 启动类（含桌面模式空闲端口自适应）
+│       │   ├── DesktopTray.java          # Windows 系统托盘图标与自动打开浏览器
 │       │   ├── ToolController.java       # REST 接口与异步任务提交/查询/下载
 │       │   ├── ApiExceptionHandler.java  # 上传超限等统一异常处理
 │       │   ├── Job.java                  # 任务状态与进度模型
