@@ -1,0 +1,51 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #app { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page { max-width: 1280px; margin: 0 auto; }
+
+/* 通用卡片面板 */
+.panel { margin-bottom: 16px; border-radius: 10px; }
+.panel .el-card__header { padding: 12px 18px; }
+.panel-title { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+
+/* 参数面板里的说明文字与等宽分段按钮 */
+.opt-form .hint { margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--el-text-color-secondary); }
+.opt-form .el-form-item { margin-bottom: 16px; }
+.opt-form .el-form-item:last-child { margin-bottom: 0; }
+.opt-form .full { width: 100%; }
+.opt-form .seg-group { display: flex; width: 100%; }
+.opt-form .seg-group .el-radio-button { flex: 1; min-width: 0; }
+.opt-form .seg-group .el-radio-button__inner {
+  width: 100%;
+  padding-left: 8px;
+  padding-right: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 等宽数字，避免进度百分比、文件大小和表格列数字抖动错位 */
+.tnum,
+.el-statistic__number,
+.el-progress__text,
+.el-pagination,
+.el-table .cell {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 页面切换动画 */
+.fade-enter-active, .fade-leave-active { transition: opacity .15s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--el-border-color); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--el-text-color-placeholder); }
+.aside ::-webkit-scrollbar-thumb { background: #ffffff26; }
