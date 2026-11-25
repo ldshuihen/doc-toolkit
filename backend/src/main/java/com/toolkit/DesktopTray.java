@@ -22,48 +22,63 @@ import org.springframework.stereotype.Component;
 @Component
 public class DesktopTray implements ApplicationListener<ApplicationReadyEvent> {
 
-    private TrayIcon trayIcon;
+    private volatile TrayIcon trayIcon;
+    private volatile ConfigurableApplicationContext appCtx;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         if (!Boolean.getBoolean("toolkit.desktop")) return;
-        ConfigurableApplicationContext ctx = event.getApplicationContext();
-        int port = (ctx instanceof WebServerApplicationContext web) ? web.getWebServer().getPort() : 8080;
+        appCtx = event.getApplicationContext();
+        int port = (appCtx instanceof WebServerApplicationContext web) ? web.getWebServer().getPort() : 8080;
         String url = "http://localhost:" + port;
 
         SwingUtilities.invokeLater(() -> {
-            installTray(ctx, url);
+            installTray(url);
             openBrowser(url);
         });
     }
 
-    private void installTray(ConfigurableApplicationContext ctx, String url) {
+    /** 供系统托盘与网页顶部“退出程序”按钮共同调用的优雅退出方法 */
+    public void shutdown() {
+        TrayIcon icon = this.trayIcon;
+        this.trayIcon = null;
+        if (icon != null && SystemTray.isSupported()) {
+            try {
+                SystemTray.getSystemTray().remove(icon);
+            } catch (Exception ignored) {}
+        }
+        ConfigurableApplicationContext ctx = this.appCtx;
+        Thread t = new Thread(() -> {
+            try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+            int code = ctx != null ? SpringApplication.exit(ctx, () -> 0) : 0;
+            System.exit(code);
+        }, "toolkit-shutdown");
+        t.setDaemon(false);
+        t.start();
+    }
+
+    private void installTray(String url) {
         if (!SystemTray.isSupported()) return;
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {}
 
         try {
-            // 使用 Swing JPopupMenu 避免 Windows 原生 AWT PopupMenu 在 UTF-8 下的中文乱码问题
             JPopupMenu menu = new JPopupMenu();
             JMenuItem openItem = new JMenuItem("打开文档工具箱 (" + url.replace("http://", "") + ")");
             openItem.addActionListener(e -> openBrowser(url));
             JMenuItem exitItem = new JMenuItem("退出程序");
-            exitItem.addActionListener(e -> {
-                if (trayIcon != null) SystemTray.getSystemTray().remove(trayIcon);
-                new Thread(() -> {
-                    int code = SpringApplication.exit(ctx, () -> 0);
-                    System.exit(code);
-                }, "toolkit-shutdown").start();
-            });
+            exitItem.addActionListener(e -> shutdown());
             menu.add(openItem);
             menu.addSeparator();
             menu.add(exitItem);
 
-            // 隐藏对话框作为托盘菜单宿主，确保点击菜单外区域时自动收起
+            // 隐藏无边框工具窗作为菜单宿主，避免任务栏多出图标
             JDialog invoker = new JDialog();
             invoker.setUndecorated(true);
-            invoker.setSize(0, 0);
+            invoker.setType(Window.Type.UTILITY);
+            invoker.setAlwaysOnTop(true);
+            invoker.setSize(1, 1);
 
             trayIcon = new TrayIcon(createIcon(), "文档工具箱 (" + url + ")");
             trayIcon.setImageAutoSize(true);
@@ -71,17 +86,20 @@ public class DesktopTray implements ApplicationListener<ApplicationReadyEvent> {
             trayIcon.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseReleased(MouseEvent e) {
-                    if (e.isPopupTrigger()) showMenu(e);
+                    if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) showMenu();
                 }
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    if (e.isPopupTrigger()) showMenu(e);
-                }
-                private void showMenu(MouseEvent e) {
-                    invoker.setLocation(e.getX(), e.getY());
+                private void showMenu() {
+                    // 使用 MouseInfo 获取经高 DPI 换算后的逻辑坐标，并保证菜单在任务栏上方完整显示
+                    Point pt = MouseInfo.getPointerInfo().getLocation();
+                    Dimension pref = menu.getPreferredSize();
+                    Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+                    int x = Math.min(pt.x, bounds.x + bounds.width - pref.width - 4);
+                    int y = pt.y - pref.height;
+                    if (y < bounds.y) y = pt.y;
+                    invoker.setLocation(Math.max(bounds.x, x), Math.max(bounds.y, y));
                     invoker.setVisible(true);
-                    menu.show(invoker, 0, 0);
                     invoker.toFront();
+                    menu.show(invoker, 0, 0);
                 }
             });
             menu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
@@ -91,9 +109,9 @@ public class DesktopTray implements ApplicationListener<ApplicationReadyEvent> {
             });
 
             SystemTray.getSystemTray().add(trayIcon);
-            trayIcon.displayMessage("文档工具箱已启动", "双击托盘图标可随时打开 " + url, TrayIcon.MessageType.INFO);
+            trayIcon.displayMessage("文档工具箱已启动", "可在网页右上角或托盘右键退出程序", TrayIcon.MessageType.INFO);
         } catch (Exception ignored) {
-            // 托盘不可用时不影响服务运行
+            // 托盘不可用时仍可通过网页右上角按钮退出
         }
     }
 
@@ -127,4 +145,3 @@ public class DesktopTray implements ApplicationListener<ApplicationReadyEvent> {
         return img;
     }
 }
-

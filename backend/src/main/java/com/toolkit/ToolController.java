@@ -1,10 +1,12 @@
 package com.toolkit;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,13 +24,15 @@ public class ToolController {
     private final PdfService pdfService;
     private final ImageService imageService;
     private final JobService jobs;
+    private final DesktopTray desktopTray;
 
-    public ToolController(WordToPdfService w, RenameService r, PdfService p, ImageService i, JobService j) {
+    public ToolController(WordToPdfService w, RenameService r, PdfService p, ImageService i, JobService j, DesktopTray dt) {
         this.wordToPdf = w;
         this.renameService = r;
         this.pdfService = p;
         this.imageService = i;
         this.jobs = j;
+        this.desktopTray = dt;
     }
 
     @PostMapping("/word2pdf")
@@ -119,10 +123,31 @@ public class ToolController {
         return start(outName, files, (fs, job) -> imageService.convert(fs, job, ext, quality, maxWidth));
     }
 
-    /** 健康检查：前端顶部栏据此显示“服务正常 / 后端离线”以及正在处理的任务数 */
+    /** 健康检查：前端顶部栏据此显示服务状态、活跃任务数，以及是否为桌面 EXE 模式 */
     @GetMapping("/health")
     public Map<String, Object> health() {
-        return Map.of("status", "UP", "activeJobs", jobs.activeCount());
+        return Map.of(
+                "status", "UP",
+                "activeJobs", jobs.activeCount(),
+                "desktop", Boolean.getBoolean("toolkit.desktop"));
+    }
+
+    /** 桌面 EXE 模式下的本机优雅退出接口（仅允许 desktop 模式且来自本机回环地址的请求） */
+    @PostMapping("/shutdown")
+    public ResponseEntity<Map<String, Object>> shutdown(HttpServletRequest req) {
+        if (!Boolean.getBoolean("toolkit.desktop") || !isLocal(req.getRemoteAddr())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "当前运行模式不支持网页退出"));
+        }
+        desktopTray.shutdown();
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    private static boolean isLocal(String addr) {
+        try {
+            return addr != null && InetAddress.getByName(addr).isLoopbackAddress();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @GetMapping("/jobs/{id}")

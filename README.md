@@ -60,7 +60,7 @@
 
 1. 前往 [**Releases 页面**](https://github.com/ldshuihen/doc-toolkit/releases/latest) 下载最新的 `DocToolkit-win-x64.zip` 并解压；
 2. 双击目录中的 `DocToolkit.exe` 启动（**无需安装 JDK / Java / Maven / Node.js**，已内置精简 JRE 与前端资源）；
-3. 启动后会自动在默认浏览器打开应用页面，并在任务栏右下角常驻托盘图标（双击打开页面，右键可退出程序）。
+3. 启动后会自动在默认浏览器打开应用页面，并在任务栏右下角常驻托盘图标；可直接点击**网页右上角“退出程序”按钮**，或在右下角托盘右键退出。
 
 > 注：除 **Word 转 PDF** 需要本机安装 Microsoft Word 外，其余 9 项工具在纯净 Windows 10/11（64 位）上均可直接运行。首次启动若弹出 Windows SmartScreen 提示，点击“更多信息 → 仍要运行”即可。
 

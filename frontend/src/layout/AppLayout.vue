@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, Clock, Fold, Expand, Search, Moon, Sunny, Files } from '@element-plus/icons-vue'
+import { HomeFilled, Clock, Fold, Expand, Search, Moon, Sunny, Files, SwitchButton } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { tools, toolMap, groupMap, groupedTools } from '../tools'
 import { dark } from '../stores/theme'
-import { health, startHealth } from '../stores/health'
+import { health, startHealth, stopHealth } from '../stores/health'
 import { anyRunning, runningJobs } from '../workspace'
 
 const route = useRoute()
@@ -13,6 +14,20 @@ const router = useRouter()
 const collapsed = ref(false)
 const query = ref('')
 const searchRef = ref()
+const exited = ref(false)
+
+async function exitApp() {
+  try {
+    stopHealth()
+    const res = await fetch('/api/shutdown', { method: 'POST' })
+    if (!res.ok) throw new Error('无法退出服务')
+    exited.value = true
+    window.close()
+  } catch (e) {
+    ElMessage.error(e.message || '退出失败')
+    startHealth()
+  }
+}
 
 const crumbs = computed(() => {
   if (route.name === 'tool') {
@@ -137,11 +152,22 @@ onBeforeUnmount(() => {
             <span class="dot" :class="healthView.type"></span>{{ healthView.text }}
           </el-tag>
           <el-switch v-model="dark" inline-prompt :active-icon="Moon" :inactive-icon="Sunny" title="切换深色模式" />
+          <el-popconfirm v-if="health.desktop" width="240" confirm-button-text="退出" cancel-button-text="取消"
+                         confirm-button-type="danger"
+                         :title="anyRunning() ? '当前仍有任务在处理中，确定退出吗？' : '确定退出文档工具箱吗？'"
+                         @confirm="exitApp">
+            <template #reference>
+              <el-button type="danger" plain size="small" :icon="SwitchButton">退出程序</el-button>
+            </template>
+          </el-popconfirm>
         </div>
       </el-header>
 
       <el-main class="main">
-        <router-view v-slot="{ Component, route: r }">
+        <div v-if="exited" class="exited">
+          <el-result icon="success" title="文档工具箱已安全退出" sub-title="后台服务已停止，您现在可以关闭此浏览器标签页。" />
+        </div>
+        <router-view v-else v-slot="{ Component, route: r }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="r.fullPath" />
           </transition>
@@ -198,6 +224,7 @@ onBeforeUnmount(() => {
 .sg small { margin-left: auto; color: var(--el-text-color-placeholder); }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: currentColor; }
 .main { background: var(--el-bg-color-page); padding: 20px 24px 32px; overflow-y: auto; }
+.exited { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
 @media (max-width: 760px) { .search { width: 150px; } .h-left .el-breadcrumb { display: none; } }
 </style>
 

@@ -1,6 +1,7 @@
 package com.toolkit;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.junit.jupiter.api.Test;
@@ -17,12 +18,16 @@ class ToolControllerTest {
     private MockMvc mvc;
 
     @Test
-    void healthAndMissingJob() throws Exception {
+    void healthMissingJobAndShutdownGuard() throws Exception {
         mvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("UP"));
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.desktop").value(false));
 
         mvc.perform(get("/api/jobs/non-existent-id"))
                 .andExpect(status().isNotFound());
+
+        mvc.perform(post("/api/shutdown"))
+                .andExpect(status().isForbidden());
     }
 }
